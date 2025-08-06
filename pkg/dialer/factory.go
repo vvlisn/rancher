@@ -148,6 +148,21 @@ func (f *Factory) clusterDialer(clusterName, address string, retryOnError bool) 
 		return nativeDialer, nil
 	}
 
+	if cluster.Labels["cattle.io/force-direct-mode"] == "true" {
+		if customEndpoint := cluster.Labels["cattle.io/api-endpoint"]; customEndpoint != "" {
+			u, err := url.Parse(customEndpoint)
+			if err == nil {
+				customAddress := u.Host
+				if !strings.Contains(customAddress, ":") {
+					customAddress = customAddress + ":6443"
+				}
+				address = customAddress
+				logrus.Infof("Using custom API address for cluster [%s]: %s", cluster.Name, address)
+			}
+		}
+		return nativeDialer, nil
+	}
+
 	hostPort := hostPort(cluster)
 	logrus.Tracef("dialerFactory: apiEndpoint hostPort for cluster [%s] is [%s]", clusterName, hostPort)
 	if (address == hostPort || isProxyAddress(address)) && IsPublicCloudDriver(cluster) {
