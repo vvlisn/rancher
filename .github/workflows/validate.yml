@@ -1,6 +1,5 @@
 name: Validate
-on:
-  workflow_dispatch:
+on: [pull_request, push]
 jobs:
   validate:
     runs-on: org-${{ github.repository_owner_id }}-amd64-k8s
