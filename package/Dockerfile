@@ -13,11 +13,11 @@ ARG GODEP_STEVE_PATH
 ARG GODEP_WRANGLER=scratch
 ARG GODEP_WRANGLER_PATH
 
-ARG CHART_DEFAULT_BRANCH=dev-v2.13
+ARG CHART_DEFAULT_BRANCH=release-v2.12
 ARG PARTNER_CHART_DEFAULT_BRANCH=main
 ARG RKE2_CHART_DEFAULT_BRANCH=main
 # kontainer-driver-metadata branch to be set for specific branch other than dev/master, logic at rancher/rancher/pkg/settings/setting.go
-ARG CATTLE_KDM_BRANCH=dev-v2.13
+ARG CATTLE_KDM_BRANCH=release-v2.12
 ARG VERSION=${VERSION}
 
 FROM --platform=$BUILDPLATFORM ${GODEP_APISERVER} AS godep-apiserver
@@ -157,10 +157,8 @@ ENV CATTLE_MACHINE_PROVISION_IMAGE=rancher/machine:${CATTLE_MACHINE_VERSION}
 ENV CATTLE_ETCD_VERSION=v3.5.21
 ENV DOCKER_MACHINE_LINODE_VERSION=v0.1.15
 ENV LINODE_UI_DRIVER_VERSION=v0.7.0
-# For displaying Helm version in the UI only.
-ENV CATTLE_HELM_VERSION=v3.18.3-rancher1
 # make sure the version number is consistent with the one at Line 100 of pkg/data/management/machinedriver_data.go
-ENV DOCKER_MACHINE_HARVESTER_VERSION=v1.0.2
+ENV DOCKER_MACHINE_HARVESTER_VERSION=v1.0.3
 ENV CATTLE_KDM_BRANCH=${CATTLE_KDM_BRANCH}
 ENV CATTLE_WINS_AGENT_VERSION=v0.5.2
 ENV CATTLE_WINS_AGENT_INSTALL_SCRIPT=https://raw.githubusercontent.com/rancher/wins/${CATTLE_WINS_AGENT_VERSION}/install.ps1
@@ -265,10 +263,10 @@ RUN mkdir -p /var/lib/rancher/k3s/agent/images/ && \
     curl -sfL ${ETCD_URL} | tar xvzf - --strip-components=1 --no-same-owner -C /usr/bin/ etcd-${CATTLE_ETCD_VERSION}-linux-${ARCH}/etcdctl && \
     mkdir -p /var/lib/rancher-data/driver-metadata
 
-ENV CATTLE_UI_VERSION=2.12.0-alpha14
-ENV CATTLE_DASHBOARD_UI_VERSION=v2.12.0-alpha14
+ENV CATTLE_UI_VERSION=2.12.0
+ENV CATTLE_DASHBOARD_UI_VERSION=v2.12.0
 
-ENV CATTLE_CLI_VERSION=v2.12.0-rc.1
+ENV CATTLE_CLI_VERSION=v2.12.0
 
 # Base UI brand used as a fallback env setting (not user facing) to indicate this is a non-prime install
 ENV CATTLE_BASE_UI_BRAND=
@@ -363,16 +361,11 @@ ARG COMMIT
 ARG TAGS="k8s"
 ARG LINKFLAGS="-extldflags -static -s"
 ARG LDFLAGS="-X github.com/rancher/rancher/pkg/version.Version=${VERSION} -X github.com/rancher/rancher/pkg/version.GitCommit=${COMMIT} ${LINKFLAGS}"
-ARG GCFLAGS
 ARG TARGETOS
 ARG TARGETARCH
 COPY pkg/ pkg/
 COPY main.go ./
-RUN --mount=type=cache,target=/root/.cache,id=rancher GOOS=$TARGETOS GOARCH=$TARGETARCH go build -tags "${TAGS}" -ldflags "${LDFLAGS}" ${GCFLAGS:+-gcflags "$GCFLAGS"} -o /app/rancher
-
-# Output just the server binary
-FROM scratch AS server-binary
-COPY --from=server-build /app/rancher /bin/rancher
+RUN --mount=type=cache,target=/root/.cache,id=rancher GOOS=$TARGETOS GOARCH=$TARGETARCH go build -tags "${TAGS}" -ldflags "${LDFLAGS}" -o /app/rancher
 
 
 FROM --platform=$BUILDPLATFORM rancher-go-builder AS agent-build
@@ -380,12 +373,11 @@ ARG VERSION
 ARG TAGS="k8s"
 ARG LINKFLAGS="-extldflags -static -s"
 ARG LDFLAGS="-X main.VERSION=${VERSION} $LINKFLAGS"
-ARG GCFLAGS
 ARG TARGETOS
 ARG TARGETARCH
 COPY cmd/ cmd/
 COPY pkg/ pkg/
-RUN --mount=type=cache,target=/root/.cache,id=rancher GOOS=$TARGETOS GOARCH=$TARGETARCH go build -tags "${TAGS}" -ldflags "${LDFLAGS}" ${GCFLAGS:+-gcflags "$GCFLAGS"} -o /app/agent ./cmd/agent
+RUN --mount=type=cache,target=/root/.cache,id=rancher GOOS=$TARGETOS GOARCH=$TARGETARCH go build -tags "${TAGS}" -ldflags "${LDFLAGS}" -o /app/agent ./cmd/agent
 
 
 FROM base AS server

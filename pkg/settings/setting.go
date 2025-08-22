@@ -59,6 +59,16 @@ var (
 		"cattle-telemetry-system",
 		"cattle-local-user-passwords",
 		"cattle-tokens",
+		"container-platform-system",
+		"container-platform-public",
+		"crane-system",
+		"kruise-rollout",
+		"sbux-system-t0",
+		"sbux-system-t1",
+		"sbux-system-t2",
+		"sbux-system-kong",
+		"sbux-system-f5",
+		"platform-system-stg",
 	}
 
 	AgentImage          = NewSetting("agent-image", "rancher/rancher-agent:head")
